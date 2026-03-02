@@ -1,18 +1,16 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import JSONResponse # Importe separado aqui
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
-
 
 @app.get("/v1/emprestimos/escrituracoes-remuneracoes")
 def get_mock_data(
         dataHoraInicio: str = Query(...),
         dataHoraFim: str = Query(...),
         nroPagina: int = Query(1),
-        simularErro: bool = Query(False)  # Adicionei este gatilho para você testar o 400
+        simularErro: bool = Query(False)
 ):
     # --- GATILHO PARA TESTAR O ERRO 400 ---
-    # Se você adicionar &simularErro=true na URL, ele retorna o erro que você pediu
     if simularErro:
         return JSONResponse(
             status_code=400,
@@ -27,22 +25,21 @@ def get_mock_data(
             }
         )
 
-    # --- LÓGICA DE PAGINAÇÃO OK ---
+    # --- CONFIGURAÇÃO DA MOCK DATA ---
     total_paginas = 4
     registros_por_pagina = 250
+    total_registros = total_paginas * registros_por_pagina
 
-    # Se pedir uma página que não existe (ex: 5)
     if nroPagina > total_paginas:
         return {
             "nroPaginaAtual": nroPagina,
             "nroTotalPaginas": total_paginas,
-            "nroTotalRegistros": total_paginas * registros_por_pagina,
+            "nroTotalRegistros": total_registros,
             "conteudo": []
         }
 
     conteudo = []
     for i in range(registros_por_pagina):
-        # O ID muda conforme a página: Pag 1 (1-250), Pag 2 (251-500)...
         registro_id = ((nroPagina - 1) * registros_por_pagina) + i + 1
 
         conteudo.append({
@@ -57,20 +54,29 @@ def get_mock_data(
             "numeroInscricaoEmpregador": 3495672000103,
             "matricula": "11153706008",
             "dataHoraInclusaoDataprev": "22022026195013",
-            "emprestimo": {"codigoIf": 393, "contrato": "10001", "valorParcela": 300},
+            "emprestimo": {
+                "codigoIf": 393,
+                "contrato": "10001",
+                "valorParcela": 300
+            },
             "analise": {
                 "existeTrabalhadorEscriturado": True,
+                "existeNumeroContratoEscriturado": True, # <--- NOVO
                 "vinculoCorreto": True,
+                "instituicaoFinanceiraCorreta": True,   # <--- NOVO
                 "valorParcelaCorreta": (i % 2 == 0),
                 "dadosCorrespondentes": True
             },
-            "tipoEventoESocial": {"codigo": 0, "descricao": "Evento de remuneração periódico"}
+            "tipoEventoESocial": {
+                "codigo": 0,
+                "descricao": "Evento de remuneração periódico"
+            }
         })
 
     return {
         "nroPaginaAtual": nroPagina,
         "nroTotalPaginas": total_paginas,
-        "nroTotalRegistros": total_paginas * registros_por_pagina,
+        "nroTotalRegistros": total_registros,
         "qtdRegistrosPorPagina": registros_por_pagina,
         "qtdRegistrosPaginaAtual": len(conteudo),
         "dataHoraInicio": dataHoraInicio,
