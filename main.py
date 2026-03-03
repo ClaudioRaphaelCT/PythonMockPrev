@@ -23,7 +23,7 @@ def get_mock_data(
             }
         )
 
-    registros_por_pagina = 250
+    registros_por_pagina = 15
     total_paginas = 4
     total_registros = total_paginas * registros_por_pagina
 
