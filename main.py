@@ -1,90 +1,103 @@
+import csv
+import os
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
+CSV_PATH = os.path.join(os.getcwd(), "dados.csv")
+
+
+def carregar_dados_csv():
+    dados = []
+    if not os.path.exists(CSV_PATH):
+        return None
+
+    with open(CSV_PATH, mode='r', encoding='utf-8-sig') as f:
+        # Lemos o conteúdo e removemos aspas duplas que o Excel coloca em colunas
+        content = f.read().replace('"', '')
+        f.seek(0)
+
+        # Usamos o delimitador ';' que é o que aparece na sua imagem
+        reader = csv.DictReader(content.splitlines(), delimiter=';')
+
+        # Limpa espaços e possíveis aspas dos nomes das colunas
+        reader.fieldnames = [name.strip().replace('"', '') for name in reader.fieldnames]
+
+        for row in reader:
+            # Limpa cada valor individualmente
+            clean_row = {
+                str(k).strip(): (str(v).strip() if v is not None else "")
+                for k, v in row.items()
+            }
+            if any(clean_row.values()):  # Só adiciona se a linha não for totalmente vazia
+                dados.append(clean_row)
+    return dados
+
+
 @app.get("/v1/emprestimos/escrituracoes-remuneracoes")
 def get_mock_data(
         dataHoraInicio: str = Query(...),
         dataHoraFim: str = Query(...),
-        nroPagina: int = Query(1),
-        simularErro: bool = Query(False)
+        nroPagina: int = Query(1)
 ):
-    if simularErro:
-        return JSONResponse(status_code=400, content={"status": 400, "title": "Erro"})
+    todos_registros = carregar_dados_csv()
 
-    # --- CONFIGURAÇÃO PARA TESTAR PAGINAÇÃO ---
-    registros_por_pagina = 20 # Conforme sua planilha
-    total_paginas = 4         # Vamos colocar 4 páginas para você testar o scroll
-    total_registros = 80     # Total fictício maior para forçar a paginação
-
-    # Se a página solicitada não existir
-    if nroPagina > total_paginas:
-        return {"nroPaginaAtual": nroPagina, "conteudo": []}
+    if todos_registros is None:
+        return JSONResponse(status_code=500, content={"error": "Arquivo dados.csv nao encontrado."})
 
     conteudo = []
+    for item in todos_registros:
+        # Debug: Se ainda retornar vazio, descomente a linha abaixo para ver no console o que está chegando
+        # print(f"Processando linha: {item}")
 
-    # --- SE FOR A PÁGINA 1: INSERIR OS 12 REAIS DA PLANILHA ---
-    if nroPagina == 1:
-        raw_data = [
-            [1001, 101, "48", 527.42, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1002, 102, "53", 1135.45, 25274606075, "150220241", 0, "Evento de remuneração periódico"],
-            [1003, 103, "445", 2825.46, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1004, 104, "45", 1131.21, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1005, 105, "65", 1122.69, 99813582073, "150220241", 0, "Evento de remuneração periódico"],
-            [1006, 106, "444", 1830.38, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1007, 107, "44", 1131.21, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1008, 108, "49", 1111.22, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1009, 109, "50", 600.88, 24189796018, "150220241", 0, "Evento de remuneração periódico"],
-            [1010, 110, "33", 2833.22, 44900000000, "150220241", 0, "Evento de remuneração periódico"],
-            [1011, 111, "46", 1131.21, 59271637003, "150220241", 0, "Evento de remuneração periódico"],
-            [1012, 112, "40", 1128.73, 44900000000, "150220241", 1, "Evento de remuneração afastamento"],
-        ]
+        try:
+            # Mapeamento dinâmico baseado na sua imagem
+            # Note que usamos chaves que ignoram maiúsculas/minúsculas se necessário
+            reg_id = item.get('id') or item.get('ID') or item.get('\ufeffid')
 
-        for row in raw_data:
-            conteudo.append(self_build_item(row)) # Usa os dados da planilha
+            if not reg_id:
+                continue
 
-    # --- COMPLEMENTAR A PÁGINA (ATÉ CHEGAR EM 25) OU GERAR PÁGINAS 2, 3... ---
-    inicio_loop = len(conteudo)
-    for i in range(inicio_loop, registros_por_pagina):
-        # Gera IDs automáticos que não batem com os seus (ex: 2000 em diante)
-        idx_fake = ((nroPagina - 1) * registros_por_pagina) + i + 2000
-        fake_row = [idx_fake, 200, "9999", 10.50, 11153706008, "999999", 0, "Evento Automático"]
-        conteudo.append(self_build_item(fake_row))
+            conteudo.append({
+                "id": int(reg_id),
+                "idEvento": int(item.get('idEvento', 0)),
+                "periodoReferencia": int(item.get('periodoReferencia', 0)),
+                "codigoIF": int(item.get('codigoIF', 393)),
+                "contrato": item.get('contrato', ''),
+                "valorParcelaDesconto": float(item.get('valorParcelaDesconto', '0').replace(',', '.')),
+                "cpf": int(item.get('cpf', 0)),
+                "inscricaoEmpregador": {"codigo": 1, "descricao": "CNPJ"},
+                "numeroInscricaoEmpregador": int(item.get('numeroInscricaoEmpregador', 0)),
+                "matricula": item.get('matricula', ''),
+                "dataHoraInclusaoDataprev": item.get('dataHoraInclusaoDataprev', ''),
+                "emprestimo": {
+                    "codigoIf": int(item.get('codigoIF', 393)),
+                    "contrato": item.get('contrato', ''),
+                    "valorParcela": 300.0
+                },
+                "analise": {
+                    "existeTrabalhadorEscriturado": str(item.get('existeTrabalhadorEscriturado', '')).upper() == 'TRUE',
+                    "existeNumeroContratoEscriturado": str(
+                        item.get('existeNumeroContratoEscriturado', '')).upper() == 'TRUE',
+                    "vinculoCorreto": str(item.get('vinculoCorreto', '')).upper() == 'TRUE',
+                    "instituicaoFinanceiraCorreta": str(item.get('instituicaoFinanceiraCorreta', '')).upper() == 'TRUE',
+                    "valorParcelaCorreta": str(item.get('valorParcelaCorreta', '')).upper() == 'TRUE',
+                    "dadosCorrespondentes": str(item.get('dadosCorrespondentes', '')).upper() == 'TRUE'
+                },
+                "tipoEventoESocial": {"codigo": 0, "descricao": "Evento de remuneração periódico"}
+            })
+        except (ValueError, TypeError) as e:
+            print(f"Erro ao converter linha: {e}")
+            continue
 
     return {
         "nroPaginaAtual": nroPagina,
-        "nroTotalPaginas": total_paginas,
-        "nroTotalRegistros": total_registros,
-        "qtdRegistrosPorPagina": registros_por_pagina,
+        "nroTotalPaginas": 1,
+        "nroTotalRegistros": len(conteudo),
+        "qtdRegistrosPorPagina": 250,
         "qtdRegistrosPaginaAtual": len(conteudo),
         "dataHoraInicio": dataHoraInicio,
         "dataHoraFim": dataHoraFim,
         "conteudo": conteudo
-    }
-
-def self_build_item(row):
-    """Função auxiliar para montar o JSON de cada item"""
-    return {
-        "id": row[0],
-        "idEvento": row[1],
-        "periodoReferencia": 202601,
-        "codigoIF": 393,
-        "contrato": row[2],
-        "valorParcelaDesconto": row[3],
-        "cpf": row[4],
-        "inscricaoEmpregador": {"codigo": 1, "descricao": "CNPJ"},
-        "numeroInscricaoEmpregador": 3495672000103,
-        "matricula": row[5],
-        "dataHoraInclusaoDataprev": "010220260800",
-        "emprestimo": {"codigoIf": 393, "contrato": row[2], "valorParcela": row[3]},
-        "analise": {
-            "existeTrabalhadorEscriturado": True,
-            "existeNumeroContratoEscriturado": True,
-            "vinculoCorreto": True,
-            "instituicaoFinanceiraCorreta": True,
-            "valorParcelaCorreta": True,
-            "dadosCorrespondentes": True
-        },
-        "tipoEventoESocial": {"codigo": row[6], "descricao": row[7]}
     }
