@@ -129,14 +129,13 @@ def get_mock_data(
                 "tipoEventoESocial": {"codigo": 0, "descricao": "Evento de remuneração periódico"}
             })
 
-    # Cálculo do total de registros para a resposta
     # Se for página 1, o total de registros é o tamanho do CSV + o mock das outras 9 páginas
-    total_csv = len(carregar_dados_csv()) if nroPagina == 1 else 0  # Simplificado para performance
+    total_csv = len(carregar_dados_csv()) if nroPagina == 1 else 0
 
     return {
         "nroPaginaAtual": nroPagina,
         "nroTotalPaginas": TOTAL_PAGINAS,
-        "nroTotalRegistros": 2250 + (total_csv if nroPagina == 1 else 68),  # Ajuste manual para bater com seus 68 itens
+        "nroTotalRegistros": 2250 + (total_csv if nroPagina == 1 else 68),
         "qtdRegistrosPorPagina": REGISTROS_POR_PAGINA,
         "qtdRegistrosPaginaAtual": len(conteudo),
         "dataHoraInicio": dataHoraInicio,
