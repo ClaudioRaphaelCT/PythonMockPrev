@@ -9,7 +9,7 @@ app = FastAPI()
 
 CSV_PATH = os.path.join(os.getcwd(), "dados.csv")
 REGISTROS_POR_PAGINA = 80
-TOTAL_PAGINAS = 10
+TOTAL_PAGINAS = 2
 
 
 # --- Utilitários de Conversão ---
