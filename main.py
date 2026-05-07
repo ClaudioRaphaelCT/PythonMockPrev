@@ -70,7 +70,7 @@ def get_mock_data(
             conteudo.append({
                 "id": to_int(id_raw),
                 "idEvento": to_int(item.get("idEvento")),
-                "periodoReferencia": 202312,
+                "periodoReferencia": 202603,
                 "codigoIF": 393,
                 "contrato": item.get("contrato", ""),
                 "valorParcelaDesconto": to_float(item.get("valorParcelaDesconto")),
