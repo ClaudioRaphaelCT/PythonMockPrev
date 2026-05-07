@@ -71,7 +71,7 @@ def get_mock_data(
                 "id": to_int(id_raw),
                 "idEvento": to_int(item.get("idEvento")),
                 # Rever depois
-                "periodoReferencia": 202603,
+                "periodoReferencia": 202604,
                 "codigoIF": 393,
                 "contrato": item.get("contrato", ""),
                 "valorParcelaDesconto": to_float(item.get("valorParcelaDesconto")),
