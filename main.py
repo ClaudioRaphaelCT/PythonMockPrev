@@ -67,10 +67,23 @@ def get_mock_data(
             id_raw = item.get("id") or item.get("ID")
             if not id_raw: continue
 
+            # 1. Montamos o bloco de análise previamente
+            analise_dict = {
+                "existeTrabalhadorEscriturado": to_bool(item.get("existeTrabalhadorEscriturado")),
+                "existeNumeroContratoEscriturado": to_bool(item.get("existeNumeroContratoEscriturado")),
+                "vinculoCorreto": to_bool(item.get("vinculoCorreto")),
+                "instituicaoFinanceiraCorreta": to_bool(item.get("instituicaoFinanceiraCorreta")),
+                "valorParcelaCorreta": to_bool(item.get("valorParcelaCorreta")),
+                "dadosCorrespondentes": to_bool(item.get("dadosCorrespondentes")),
+            }
+
+            # 2. SE o campo original do CSV estiver vazio, removemos a chave do dicionário
+            if not item.get("existeTrabalhadorEscriturado"):
+                analise_dict.pop("existeTrabalhadorEscriturado", None)
+
             conteudo.append({
                 "id": to_int(id_raw),
                 "idEvento": to_int(item.get("idEvento")),
-                # Rever depois
                 "periodoReferencia": 202401,
                 "codigoIF": 393,
                 "contrato": item.get("contrato", ""),
@@ -85,14 +98,7 @@ def get_mock_data(
                     "contrato": item.get("contrato", ""),
                     "valorParcela": to_float(item.get("valorParcela"))
                 },
-                "analise": {
-                    "existeTrabalhadorEscriturado": to_bool(item.get("existeTrabalhadorEscriturado")),
-                    "existeNumeroContratoEscriturado": to_bool(item.get("existeNumeroContratoEscriturado")),
-                    "vinculoCorreto": to_bool(item.get("vinculoCorreto")),
-                    "instituicaoFinanceiraCorreta": to_bool(item.get("instituicaoFinanceiraCorreta")),
-                    "valorParcelaCorreta": to_bool(item.get("valorParcelaCorreta")),
-                    "dadosCorrespondentes": to_bool(item.get("dadosCorrespondentes")),
-                },
+                "analise": analise_dict,  # <--- Inserimos o dicionário tratado aqui
                 "tipoEventoESocial": {
                     "codigo": to_int(item.get("codigo")),
                     "descricao": item.get("descricaoEvento", "Evento de remuneração periódico")
@@ -107,7 +113,7 @@ def get_mock_data(
                 "idEvento": randint(100, 200),
                 "periodoReferencia": 202312,
                 "codigoIF": 393,
-                "contrato": "99999",  # CONTRATO FIXO CONFORME SOLICITADO
+                "contrato": "99999",
                 "valorParcelaDesconto": round(randint(100, 2000) + 0.55, 2),
                 "cpf": randint(10000000000, 99999999999),
                 "inscricaoEmpregador": {"codigo": 1, "descricao": "CNPJ"},
@@ -130,7 +136,6 @@ def get_mock_data(
                 "tipoEventoESocial": {"codigo": 0, "descricao": "Evento de remuneração periódico"}
             })
 
-    # Se for página 1, o total de registros é o tamanho do CSV + o mock das outras 9 páginas
     total_csv = len(carregar_dados_csv()) if nroPagina == 1 else 0
 
     return {
