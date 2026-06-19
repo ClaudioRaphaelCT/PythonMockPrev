@@ -67,21 +67,28 @@ def get_mock_data(
             id_raw = item.get("id") or item.get("ID")
             if not id_raw: continue
 
-            # 1. Montamos o bloco de análise previamente
-            analise_dict = {
-                "existeTrabalhadorEscriturado": to_bool(item.get("existeTrabalhadorEscriturado")),
-                "existeNumeroContratoEscriturado": to_bool(item.get("existeNumeroContratoEscriturado")),
-                "vinculoCorreto": to_bool(item.get("vinculoCorreto")),
-                "instituicaoFinanceiraCorreta": to_bool(item.get("instituicaoFinanceiraCorreta")),
-                "valorParcelaCorreta": to_bool(item.get("valorParcelaCorreta")),
-                "dadosCorrespondentes": to_bool(item.get("dadosCorrespondentes")),
+            # Mapeamento de todas as chaves do bloco 'analise' (Chave JSON: Coluna CSV)
+            mapeamento_analise = {
+                "existeTrabalhadorEscriturado": "existeTrabalhadorEscriturado",
+                "existeNumeroContratoEscriturado": "existeNumeroContratoEscriturado",
+                "vinculoCorreto": "vinculoCorreto",
+                "instituicaoFinanceiraCorreta": "instituicaoFinanceiraCorreta",
+                "valorParcelaCorreta": "valorParcelaCorreta",
+                "dadosCorrespondentes": "dadosCorrespondentes"
             }
 
-            # 2. SE o campo original do CSV estiver vazio, removemos a chave do dicionário
-            if not item.get("existeTrabalhadorEscriturado"):
-                analise_dict.pop("existeTrabalhadorEscriturado", None)
+            analise_dict = {}
 
-            conteudo.append({
+            # Loop que valida campo por campo do bloco analise
+            for chave_json, coluna_csv in mapeamento_analise.items():
+                valor_original = item.get(coluna_csv)
+
+                # Se o campo contiver dados (não for vazio nem None), ele entra no JSON
+                if valor_original:
+                    analise_dict[chave_json] = to_bool(valor_original)
+
+            # 1. Primeiro montamos a base do registro do item
+            registro_formatado = {
                 "id": to_int(id_raw),
                 "idEvento": to_int(item.get("idEvento")),
                 "periodoReferencia": 202401,
@@ -98,12 +105,18 @@ def get_mock_data(
                     "contrato": item.get("contrato", ""),
                     "valorParcela": to_float(item.get("valorParcela"))
                 },
-                "analise": analise_dict,  # <--- Inserimos o dicionário tratado aqui
                 "tipoEventoESocial": {
                     "codigo": to_int(item.get("codigo")),
                     "descricao": item.get("descricaoEvento", "Evento de remuneração periódico")
                 }
-            })
+            }
+
+            # 2. SE o dicionário de análise tiver dados (não estiver vazio), nós o injetamos no registro
+            if analise_dict:
+                registro_formatado["analise"] = analise_dict
+
+            # 3. Adiciona o objeto final na lista do conteúdo
+            conteudo.append(registro_formatado)
 
     elif 1 < nroPagina <= TOTAL_PAGINAS:
         # GERAR MOCK PARA PÁGINAS 2 EM DIANTE
