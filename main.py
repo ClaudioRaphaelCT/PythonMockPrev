@@ -124,7 +124,7 @@ def get_mock_data(
             conteudo.append({
                 "id": randint(2000, 9000),
                 "idEvento": randint(100, 200),
-                "periodoReferencia": 202312,
+                "periodoReferencia": 202402,
                 "codigoIF": 393,
                 "contrato": "99999",
                 "valorParcelaDesconto": round(randint(100, 2000) + 0.55, 2),
