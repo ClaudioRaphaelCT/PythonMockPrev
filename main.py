@@ -91,7 +91,7 @@ def get_mock_data(
             registro_formatado = {
                 "id": to_int(id_raw),
                 "idEvento": to_int(item.get("idEvento")),
-                "periodoReferencia": 202405,
+                "periodoReferencia": 202605,
                 "codigoIF": 393,
                 "contrato": item.get("contrato", ""),
                 "valorParcelaDesconto": to_float(item.get("valorParcelaDesconto")),
