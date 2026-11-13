@@ -91,7 +91,7 @@ def get_mock_data(
             registro_formatado = {
                 "id": to_int(id_raw),
                 "idEvento": to_int(item.get("idEvento")),
-                "periodoReferencia": 202605,
+                "periodoReferencia": 202703,
                 "codigoIF": 393,
                 "contrato": item.get("contrato", ""),
                 "valorParcelaDesconto": to_float(item.get("valorParcelaDesconto")),
@@ -126,7 +126,7 @@ def get_mock_data(
                 "idEvento": randint(100, 200),
                 "periodoReferencia": 202703,
                 "codigoIF": 393,
-                "contrato": "99999",
+                "contrato": "99998",
                 "valorParcelaDesconto": round(randint(100, 2000) + 0.55, 2),
                 "cpf": randint(10000000000, 99999999999),
                 "inscricaoEmpregador": {"codigo": 1, "descricao": "CNPJ"},
